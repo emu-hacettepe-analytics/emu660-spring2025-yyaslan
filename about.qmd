@@ -3,38 +3,35 @@ title: "About Me"
 sidebar: false 
 ---
 
-![](assets/images/vesikalik.jpeg){fig-align="center"}
+![](assets/images/vesikalik.png){fig-align="left"width=200px}
+
 
 # Education
 
--   B.S., ................................., ....................................University, Turkey, 20xx - 20xx.
--   M.S., Industrial Engineering, Hacettepe University, Turkey, 20xx - ongoing.
--   Ph.D.., Industrial Engineering, Hacettepe University, Turkey, 20xx - ongoing.
+-   B.S., Industrial Engineering, TOBB University of Economics and Technology , Turkey, 2019 - 2024.
+-   M.S., Industrial Engineering, Hacettepe University, Turkey, 2025 - ongoing.
 
 # Work Experience
 
 ## Employements
 
-1.  Firm xxx, position xx, year xxx
+1.  Roketsan, Engineer, 2024 - ongoing
 
-2.  Firm yyy, position yyy, year yyy
+2.  Beko, Engineer, 2024
 
 ## Internships
 
-1.  Firm aaa, position xx, year xxx
+1.  Havelsan, Intern, 2022
 
-2.  Firm bbb, position yyy, year yyy
+2.  Roketsan, Intern, 2023
 
 # Projects
 
-1.  TUBİTAK 1001..........................
+1.  Havelsan SUIT 2023-2024 Senior Design Project
 
-# Publications
+# Links
+For More Information -> [Download CV](assets/files/Yagmur Yunus Aslan_CV.pdf){download="YYA_CV.pdf"}
 
-1.  Dasdemir, E., Batta, R., Koksalan, M., Tezcaner Ozturk, D. (2022) “UAV Routing for Reconnaissance Mission: A Multi-Objective Orienteering Problem with Time-Dependent Prizes and Multiple Connections”, Computers & Operations Research, 145: 105882.
 
-# Competencies
 
-R, Quarto, Git, Python
 
-# Hobbies

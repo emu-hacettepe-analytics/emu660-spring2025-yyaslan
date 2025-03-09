@@ -4,3 +4,5 @@ sidebar: false
 ---
 
 This page is under construction.
+
+![](assets/images/excavator-digging.gif){fig-align="left"width=230px}

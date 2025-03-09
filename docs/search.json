@@ -4,7 +4,7 @@
     "href": "index.html",
     "title": "Welcome to My Analytics Lab",
     "section": "",
-    "text": "Hello!! My name is xxx xxxx.\nThis is my personal webpage.\nPlease stay tuned to follow my works on data analytics, blog posts, and more.\n\n\n\n Back to top"
+    "text": "Hello!! My name is Yagmur Yunus ASLAN.\nThis is my personal webpage.\nPlease stay tuned to follow my works on data analytics, blog posts, and more.\n\n\n\n Back to top"
   },
   {
     "objectID": "project.html",
@@ -74,7 +74,7 @@
     "href": "assignments.html",
     "title": "My Assignments",
     "section": "",
-    "text": "On this page, I showcase the assignment I conducted for the [term and year, e.g. Spring 2024] EMU660 Decision Making with Analytics course.\nPlease use left menu to navigate through my assignments.\n\n\n\n Back to top",
+    "text": "On this page, I showcase the assignment I conducted for the Spring 2024-2025 EMU660 Decision Making with Analytics course.\nPlease use left menu to navigate through my assignments.\n\n\n\n Back to top",
     "crumbs": [
       "My Assignments"
     ]
@@ -84,21 +84,21 @@
     "href": "about.html#employements",
     "title": "About Me",
     "section": "Employements",
-    "text": "Employements\n\nFirm xxx, position xx, year xxx\nFirm yyy, position yyy, year yyy"
+    "text": "Employements\n\nRoketsan, Engineer, 2024 - ongoing\nBeko, Engineer, 2024"
   },
   {
     "objectID": "about.html#internships",
     "href": "about.html#internships",
     "title": "About Me",
     "section": "Internships",
-    "text": "Internships\n\nFirm aaa, position xx, year xxx\nFirm bbb, position yyy, year yyy"
+    "text": "Internships\n\nHavelsan, Intern, 2022\nRoketsan, Intern, 2023"
   },
   {
     "objectID": "posts.html",
     "href": "posts.html",
     "title": "My Blog",
     "section": "",
-    "text": "This page is under construction.\n\n\n\n Back to top"
+    "text": "This page is under construction.\n\n\n\n\n\n\n\n\n Back to top"
   },
   {
     "objectID": "docs/assignments/assignment-1.html",
@@ -126,5 +126,19 @@
     "crumbs": [
       "Assignment 2"
     ]
+  },
+  {
+    "objectID": "YagmurYunusASLAN.html",
+    "href": "YagmurYunusASLAN.html",
+    "title": "Welcome to My Analytics Lab, Please Take a Seat",
+    "section": "",
+    "text": "My name is Yagmur Yunus ASLAN.\nIn short I,\nAfter graduating from TOBB University of Economics and Technology with a grade point average of 3.53, I worked as a long-term intern at Havelsan and Roketsan for about 1 year, participating in business process modeling, defense industry, and space systems projects. Then I am now an engineer at Roketsan and studying MSc at Hacettepe University. I am proficient at the intermediate-upper level in English, and I have Spanish proficiency at the basic level. As an engineer constantly learning and improving himself, I am excellent at analytical thinking and problem-solving.\n\n\n\n Back to top"
+  },
+  {
+    "objectID": "about.html",
+    "href": "about.html",
+    "title": "About Me",
+    "section": "",
+    "text": "# Education"
   }
 ]

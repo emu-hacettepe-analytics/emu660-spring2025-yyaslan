@@ -3,12 +3,12 @@ project:
   output-dir: docs
 
 website:
-  title: "[Student xxxx]'s Analytics Lab"
+  title: "Yagmur Yunus ASLAN's Analytics Lab"
   navbar:
     search: true
     left:
       - text: Home
-        href: index.qmd
+        href: YagmurYunusASLAN.qmd
       - text: About Me
         href: about.qmd
       - text: My Posts
@@ -22,12 +22,11 @@ website:
             
     tools:
       - icon: github
-        href: https://twitter.com
-      - icon: twitter
-        href: https://twitter.com
+        href: https://github.com/yyaslan
+      - icon: instagram
+        href: https://instagram.com/yyaslan
       - icon: linkedin
-        href: https://linkedin.com
-
+        href: https://www.linkedin.com/in/yyaslan
   sidebar:
     - title: "Assignments"
       style: "docked"
@@ -39,7 +38,7 @@ website:
   page-navigation: true
   back-to-top-navigation: true
   page-footer:
-    center: "Hacettepe IE - EMU660 - Spring 2024" 
+    center: "Hacettepe IE - EMU660 - Spring 2025" 
     border: true
 format:
   html:
