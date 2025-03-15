@@ -2,14 +2,131 @@
 title: "Assignment 1"
 ---
 
-# Assignment 1
+My first assignment has three parts.
+
+## (a)Choose a video from one of the following sources and provide a brief summary
+
+I chose **"[Veri Bilimi ve Endustri Muhendisligi Uzerine Sohbetler - Mustafa Baydogan & Erdi Dasdemir](https://www.youtube.com/watch?v=1Mvkn71dhaA)"**
+
+Assoc. Prof. Dr. Mustafa Gokce Baydogan participated as a guest in the EMU430 Data Analytics course, which was newly added to the curriculum. He is a faculty member in the Department of Industrial Engineering at Bogazici University and the founder of Algopoly Software and Consultancy Joint Stock Company, based in Istanbul. With a strong academic background, he has worked on large-scale data mining, time series analysis, pattern exploration, and operations research using data science tools.
+
+To convey his perspective to the students, he shared his answer to the question "Can the curvature of wet timber be estimated from its pictures?", a problem he had worked on before.
+
+In order to prevent the timber from being patched after the drying process, a pre-drying action is planned based on analyzing the wet timber images using image processing and machine learning techniques. The straight version of the timber used in home construction can be sold for 10 dollars, while the curved version is sold for only 2 dollars. If this problem is solved, a 5% increase in income is targeted.
+
+When addressing the problem, the root causes of warping were first investigated. Then, the factors that could cause warping were extracted from pictures taken before drying. These factors were processed and fed into learning algorithms, enabling the identification of timber pieces likely to warp. Filtering techniques helped interpret the locations and causes of warping.
+
+Next, to explain the importance of forecast accuracy in decision-making, he discussed how incorrect consumption forecasts in the electricity market can cause imbalances and how these effects can be mitigated.
+
+Following this, he explored the working principles of product ranking algorithms designed by e-commerce companies to optimize their revenue. The proposed ranking system arranges products based on the probability of purchase according to the buyer's profile, and the discussion included how different ranking algorithms could be incorporated.
+
+Finally, to broaden students' perspectives, he introduced physics-informed machine learning and machine learning for optimization.
+
+The lesson concluded with a Q&A session.
+
+## (b)Explore Statistical Summaries with Custom Functions and Iteration Methods
+
+Firstly write a custom summary function. The function should be named compute_stats. It should take a numeric vector as input. The function should return a named list containing the mean, median, variance, interquartile range (IQR), minimum, and maximum of the input.
 
 ```{r}
-1 + 1
+compute_stats<- function(x){
+  if(is.numeric(x)){
+    k<- list(
+      MEAN = mean(x),
+      MEDIAN = median(x),
+      VARIANCE = var(x),
+      IQR = IQR(x),
+      MIN = min(x),
+      MAX = max(x)
+      )
+    return (k)
+  }else print("Input was not numeric")
+}
+str(mtcars)
+compute_stats(mtcars$mpg)
 ```
 
-My first assignment has two parts.
+Secondly, Applying the Function Using a Loop: Use a for loop to iterate over all numerical columns of the dataset. Within the loop, apply the compute_stats function to each column. Print the computed statistics, ensuring the column name appears in the output.
 
-## (a)
+```{r}
+for(colonnames in colnames(mtcars)){
+  
+  colondata <- mtcars[[colonnames]]
+  
+  print(colonnames)
+  print(compute_stats(colondata))
+  
+}
+```
 
-## (b)
+Lastly, analternative approach with sapply and apply: Instead of a for loop, use the sapply function to apply compute_stats across all numerical columns.
+
+```{r}
+using_sapply <- sapply(mtcars, function(col) {
+  if (is.numeric(col)){
+    compute_stats(col)
+  }
+})
+using_sapply
+```
+
+Use the apply function with the appropriate margin to apply your function across all columns of the matrix.
+
+```{r}
+matrix <- as.matrix(mtcars)
+
+using_apply <- apply(matrix, 2, compute_stats)
+
+using_apply
+```
+
+## (c)Load the .na_example. dataset from the dslabs package.
+
+Display the dataset contents , including any NA (missing) values present.
+
+```{r}
+library(dslabs)
+print(na_example)
+```
+
+Report the total count of NA values found within the dataset and the index positions of all NA values in the dataset.
+
+```{r}
+sum(is.na(na_example))
+which(is.na(na_example))
+```
+
+Compute and display the mean and standard deviation of the dataset before handling missing values (ignore NAs in calculations)
+
+```{r}
+mean(na_example, na.rm=TRUE) #default na.rm=FALSE
+sd(na_example, na.rm=TRUE) #default na.rm=FALSE
+
+```
+
+Handling Missing Values- create two modified versions of the dataset:
+
+Version 1: Replace all NA values with the median of the non-missing values.
+
+```{r}
+version1<-replace(na_example,which(is.na(na_example)),median(na_example,na.rm = TRUE))
+version1
+```
+
+Version 2: Replace all NA values with a randomly selected non-missing value from the dataset.
+
+```{r}
+na_remove <- na_example[which(!is.na(na_example))]
+version2<-replace(na_example,which(is.na(na_example)),sample(na_remove, sum(is.na(na_example))))
+version2
+```
+
+Compare the Results: Compute the mean and standard deviation of both modified datasets. Compare these statistics with those from the original dataset (before handling NAs). Briefly explain which method seems more appropriate for handling missing data in this case.
+
+```{r}
+sd(na_example, na.rm=TRUE)
+sd(version1)
+sd(version2)
+```
+
+It seems that it is more appropriate for handling missing data to write the most repeated value used in version 1 instead of NA, as it reduces the standard deviation of the data.
