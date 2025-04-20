@@ -9,63 +9,63 @@
   {
     "objectID": "project.html",
     "href": "project.html",
-    "title": "Project X",
+    "title": "Various Factors Affecting BSc Students’ University Preferences",
     "section": "",
-    "text": "Welcome to my project page.\nKeep an eye on this space to stay updated with my project activities.\n(The titles below are provided as examples; please feel free to adjust them as necessary.)"
+    "text": "Welcome to my project page.\nKeep an eye on this space to stay updated with my project activities."
   },
   {
     "objectID": "project.html#data-source",
     "href": "project.html#data-source",
-    "title": "Project X",
+    "title": "Various Factors Affecting BSc Students’ University Preferences",
     "section": "2.1 Data Source",
-    "text": "2.1 Data Source\nxxxxxx"
+    "text": "2.1 Data Source\nThe data used in this project is sourced from YOK Atlas, which provides detailed information on Turkish undergraduate programs. Data access is managed through the thestats R package developed by Mustafa Cavus and Olgun Aydin. This package allows users to retrieve data such as success rankings, quotas, academic staff numbers, and Erasmus statistics at the program level.\nData is retrieved programmatically using list_score() and list_dept() functions provided by the package, allowing for reproducible and filterable queries."
   },
   {
     "objectID": "project.html#general-information-about-data",
     "href": "project.html#general-information-about-data",
-    "title": "Project X",
+    "title": "Various Factors Affecting BSc Students’ University Preferences",
     "section": "2.2 General Information About Data",
-    "text": "2.2 General Information About Data\nxxxxxx"
+    "text": "2.2 General Information About Data\nThe dataset includes a wide range of variables for each university program. These include:\nTable 3. Variables provided in {thestats}"
   },
   {
     "objectID": "project.html#reason-of-choice",
     "href": "project.html#reason-of-choice",
-    "title": "Project X",
+    "title": "Various Factors Affecting BSc Students’ University Preferences",
     "section": "2.3 Reason of Choice",
-    "text": "2.3 Reason of Choice\nxxxxxx"
+    "text": "2.3 Reason of Choice\nYOK Atlas is a detailed data source about university preferences in Turkey. I chose this data because it allows for exploring a wide range of factors, such as geographical trends, program competitiveness, academic staff profiles, and international participation through Erasmus.\nIn addition, since the data is publicly available and accessible through the R package, it is in accordance with the content of the EMU660 course on performing repeatable, data-based analysis in R."
   },
   {
     "objectID": "project.html#preprocessing",
     "href": "project.html#preprocessing",
-    "title": "Project X",
+    "title": "Various Factors Affecting BSc Students’ University Preferences",
     "section": "2.4 Preprocessing",
-    "text": "2.4 Preprocessing\nxxxxxx"
+    "text": "2.4 Preprocessing\nIn this section, we filter and preprocess the data to prepare it for analysis. We select Computer Engineering programs for illustration and extract relevant variables using the list_score() function.\n\nlibrary(thestats)\n\nZorunlu paket yükleniyor: dplyr\n\n\nWarning: package 'dplyr' was built under R version 4.4.3\n\n\n\nAttaching package: 'dplyr'\n\n\nThe following objects are masked from 'package:stats':\n\n    filter, lag\n\n\nThe following objects are masked from 'package:base':\n\n    intersect, setdiff, setequal, union\n\nlibrary(dplyr)\n\nvars_needed &lt;- c(\"X15\", \"X188\", \"X189\", \"X190\", \"X195\")\n\nscores_raw &lt;- list_score(department_names = \"all\", var_ids = vars_needed)\n\ndf &lt;- scores_raw %&gt;%\n  mutate(\n    rank = as.numeric(X15),  \n    prof = as.numeric(X188),\n    assoc_prof = as.numeric(X189),\n    asst_prof = as.numeric(X190),\n    erasmus_out = as.numeric(X195),\n    total_staff = prof + assoc_prof + asst_prof\n  ) %&gt;%\n  filter(!is.na(rank))"
   },
   {
     "objectID": "project.html#exploratory-data-analysis",
     "href": "project.html#exploratory-data-analysis",
-    "title": "Project X",
+    "title": "Various Factors Affecting BSc Students’ University Preferences",
     "section": "3.1 Exploratory Data Analysis",
-    "text": "3.1 Exploratory Data Analysis\nxxxxxx"
+    "text": "3.1 Exploratory Data Analysis\nThis bar graph shows the number of departments that send students abroad through the Erasmus program. A significant part of the departments do not participate in Erasmus exchanges, which affects the students’ choices.\n\nlibrary(ggplot2)\n\nWarning: package 'ggplot2' was built under R version 4.4.3\n\ndf_erasmus_count &lt;- scores %&gt;%\n  mutate(\n    program = department,\n    erasmus_out = as.numeric(X195)\n  ) %&gt;%\n  filter(!is.na(erasmus_out)) %&gt;%\n  group_by(program) %&gt;%\n  summarise(total = sum(erasmus_out, na.rm = TRUE)) %&gt;%\n  mutate(sent = ifelse(total &gt; 0, \"Sent\", \"None\")) %&gt;%\n  group_by(sent) %&gt;%\n  summarise(count = n())\n\nggplot(df_erasmus_count, aes(x = sent, y = count, fill = sent)) +\n  geom_col(width = 0.4) +\n  geom_text(aes(label = count), vjust = 1, size = 4) +\n  labs(title = \"Departments Sending Erasmus Students\",\n       x = \"Erasmus Activity\",\n       y = \"Number of Departments\") +\n  theme_minimal()\n\n\n\n\n\n\n\n\nThis chart displays the total number of professors, associate professors, and doctorate-level faculty members.\n\nlibrary(tidyr)\n\nWarning: package 'tidyr' was built under R version 4.4.3\n\ndf_staff &lt;- scores %&gt;%\n  mutate(\n    prof = as.numeric(X188),\n    assoc = as.numeric(X189),\n    dr = as.numeric(X190)\n  ) %&gt;%\n  summarise(\n    Professors = sum(prof, na.rm = TRUE),\n    Associates = sum(assoc, na.rm = TRUE),\n    Doctors = sum(dr, na.rm = TRUE)\n  ) %&gt;%\n  pivot_longer(cols = everything(), names_to = \"Title\", values_to = \"Count\")\n\nggplot(df_staff, aes(x = Title, y = Count, fill = Title)) +\n  geom_col(width = 0.4) +\n  geom_text(aes(label = Count), vjust = 1, size = 4) +\n  labs(title = \"Total Academic Staff Distribution\",\n       x = \"Title\",\n       y = \"Count\") +\n  theme_minimal()\n\n\n\n\n\n\n\n\nThis table shows the cities with the highest number of students in universities.\n\ndf_city &lt;- scores %&gt;%\n  mutate(\n    city = university,\n    placed = as.numeric(X11)\n  ) %&gt;%\n  filter(!is.na(city), !is.na(placed)) %&gt;%\n  group_by(city) %&gt;%\n  summarise(total_placed = sum(placed, na.rm = TRUE)) %&gt;%\n  arrange(desc(total_placed)) %&gt;%\n  slice(1:10)\n\nWarning: There was 1 warning in `mutate()`.\nℹ In argument: `placed = as.numeric(X11)`.\nCaused by warning:\n! Zorlamadan dolayı ortaya çıkan NAs\n\nggplot(df_city, aes(x = reorder(city, total_placed), y = total_placed)) +\n  geom_col(fill = \"steelblue\", width = 0.5) +\n  geom_text(aes(label = total_placed), hjust = 1, size = 4) +\n  coord_flip() +\n  labs(\n    title = \"Top 10 Cities by Student Placement\",\n    x = \"City\",\n    y = \"Total Students Placed\"\n  ) +\n  theme_minimal()"
   },
   {
     "objectID": "project.html#trend-analysis",
     "href": "project.html#trend-analysis",
-    "title": "Project X",
+    "title": "Various Factors Affecting BSc Students’ University Preferences",
     "section": "3.2 Trend Analysis",
-    "text": "3.2 Trend Analysis\nxxxxxx"
+    "text": "3.2 Trend Analysis\nxxxx"
   },
   {
     "objectID": "project.html#model-fitting",
     "href": "project.html#model-fitting",
-    "title": "Project X",
+    "title": "Various Factors Affecting BSc Students’ University Preferences",
     "section": "3.3 Model Fitting",
     "text": "3.3 Model Fitting\nxxxxxx"
   },
   {
     "objectID": "project.html#results",
     "href": "project.html#results",
-    "title": "Project X",
+    "title": "Various Factors Affecting BSc Students’ University Preferences",
     "section": "3.4 Results",
     "text": "3.4 Results\nxxxxxx"
   },
