@@ -1,5 +1,5 @@
 ---
-title: "Various Factors Affecting BSc Students' University Preferences"
+title: "The Relationship Between Educational Level and The Number of First Cousin Marriages"
 ---
 
 Welcome to my project page.
@@ -8,51 +8,75 @@ Keep an eye on this space to stay updated with my project activities.
 
 # 1. Project Overview and Scope
 
-This project shows the effect of various factors affecting the preferences of students, such as city preferences, academic staff quality, faculty popularity, and the number of students going to Erasmus by using the data obtained from the YOK Atlas through the 'thestats' R package.
+In this project, I am investigating the relationship between the level of education and the change in first cousin marriages over time in 81 provinces of Turkey. Specifically, I am testing the hypothesis that provinces with higher secondary and higher education completion rates exhibit lower cousin marriage rates.
 
 # 2. Data
 
 ## 2.1 Data Source
 
-The data used in this project is sourced from YOK Atlas, which provides detailed information on Turkish undergraduate programs. Data access is managed through the `thestats` R package developed by Mustafa Cavus and Olgun Aydin. This package allows users to retrieve data such as success rankings, quotas, academic staff numbers, and Erasmus statistics at the program level.
+-   [**Cousin Marriage Data**](https://data.tuik.gov.tr/Bulten/DownloadIstatistikselTablo?p=W9qPaB3UHC3APCfqBcL9Pw/IbmcxfqPm7j6mUvKNbwRbeVSTs7PsxUrOw0WvM9zO)
 
-Data is retrieved programmatically using `list_score()` and `list_dept()` functions provided by the package, allowing for reproducible and filterable queries.
+    Exported from the Turkish Statistical Institute database, this table contains, for each province and year, the total number of marriages, the number of marriages between first cousins, and the proportion of cousin marriages (%). Coverage: 2010-2024.
+
+-   [**Education Level Data**](https://data.tuik.gov.tr/Bulten/DownloadIstatistikselTablo?p=MOssQM1731aBCox6XZONouk1GkwqqxQ86jdpyOHxqxSLKf59B9XajpUZlq3bPMtF):
+
+    Also from TUIK, this table provides the count of individuals by education level (illiterate, literate without diploma, primary school, secondary school, high school & equivalents, universities, master, doctorate) and sex, for each province and year. Coverage: 2010-2023.
 
 ## 2.2 General Information About Data
 
-The dataset includes a wide range of variables for each university program. These include:
-
-[Table 3. Variables provided in {thestats}](https://github.com/analyticsresearchlab/thestats/blob/main/docs/Table3.md)
+-   **Cousin Marriage Dataset**
+    -   Columns per year: total marriages, cousin marriages, and cousin-marriage proportion (%)\
+    -   Rows: 81 provinces/14 years
+-   **Education Dataset**
+    -   Columns: year, province code & name, total population by education level and sex\
+    -   Education levels: illiterate, literate without diploma, primary, lower secondary, high school, universities, master, doctorate,unknown\
+    -   Rows: 81 provinces /8 education categories with 2 sexes / 15 years
 
 ## 2.3 Reason of Choice
 
-YOK Atlas is a detailed data source about university preferences in Turkey. I chose this data because it allows for exploring a wide range of factors, such as geographical trends, program competitiveness, academic staff profiles, and international participation through Erasmus.
-
-In addition, since the data is publicly available and accessible through the R package, it is in accordance with the content of the EMU660 course on performing repeatable, data-based analysis in R.
+chose these data sets because it is necessary to examine the level of education from both a cultural and social (inbreeding) point of view. Demonstrating an inverse relationship between education levels and cousin-marriage rates may support targeted interventions in areas with low education levels. Moreover, provincial granularity offers insights into regional policy needs.
 
 ## 2.4 Preprocessing
 
-In this section, we filter and preprocess the data to prepare it for analysis. We select Computer Engineering programs for illustration and extract relevant variables using the `list_score()` function.
+-   **Loading & Header Processing**
+
+    1.  Read both Excel files using `readxl::read_excel(..., col_names = FALSE)` to preserve raw header rows.
+
+    ```{r}
+    library(readxl)
+    akraba_raw <- read_excel("akraba_evliligi.xlsx",
+                             col_names = FALSE)
+
+    egitim_raw <- read_excel("egitim_durumu.xlsx",
+                             col_names = FALSE)
+    ```
+
+When the data obtained from TUIK are examined without manipulation, it is seen that its structure is not suitable for reading in R.
+
+I have brought two data into tidy form by making Reshaping to make it tidy
+
+-   **Education Data Tidy**\
+    Clean headers and reshape education data into `(Province, Year, Education_level_sex,)`\
+    **Cousin Marriage Data Tidy** Similarly clean headers and reshape cousin marriage data into `(Province, Year, Number of marriages, Number of marriages between first cousins, Proportion of marriages between first cousins (%))`
 
 ```{r}
-library(thestats)
-library(dplyr)
 
-vars_needed <- c("X15", "X188", "X189", "X190", "X195")
+tidy_education <- read_excel("tidy_education.xlsx")
 
-scores_raw <- list_score(department_names = "all", var_ids = vars_needed)
+tidy_marriages <- read_excel("tidy_marriages.xlsx")
+```
 
-df <- scores_raw %>%
-  mutate(
-    rank = as.numeric(X15),  
-    prof = as.numeric(X188),
-    assoc_prof = as.numeric(X189),
-    asst_prof = as.numeric(X190),
-    erasmus_out = as.numeric(X195),
-    total_staff = prof + assoc_prof + asst_prof
-  ) %>%
-  filter(!is.na(rank))
+Data recorded as R.Data and column names are shown.
 
+```{r}
+
+save(tidy_marriages, tidy_education, file = "data.RData")
+  
+# tidy_marriages
+print(names(tidy_marriages))
+
+# tidy_education
+print(names(tidy_education))
 
 ```
 
@@ -60,89 +84,27 @@ df <- scores_raw %>%
 
 ## 3.1 Exploratory Data Analysis
 
-This bar graph shows the number of departments that send students abroad through the Erasmus program. A significant part of the departments do not participate in Erasmus exchanges, which affects the students' choices.
+```{r Available-Years, echo=TRUE}
 
-```{r}
-library(ggplot2)
+marriage_years  <- sort(unique(tidy_marriages$Year))
+education_years <- sort(unique(tidy_education$Year))
 
-df_erasmus_count <- scores %>%
-  mutate(
-    program = department,
-    erasmus_out = as.numeric(X195)
-  ) %>%
-  filter(!is.na(erasmus_out)) %>%
-  group_by(program) %>%
-  summarise(total = sum(erasmus_out, na.rm = TRUE)) %>%
-  mutate(sent = ifelse(total > 0, "Sent", "None")) %>%
-  group_by(sent) %>%
-  summarise(count = n())
+cat("Marriages data covers years:", marriage_years, "\n")
+cat("Education data covers years:", education_years, "\n")
+```
+```{r data-overview, echo=TRUE}
 
-ggplot(df_erasmus_count, aes(x = sent, y = count, fill = sent)) +
-  geom_col(width = 0.4) +
-  geom_text(aes(label = count), vjust = 1, size = 4) +
-  labs(title = "Departments Sending Erasmus Students",
-       x = "Erasmus Activity",
-       y = "Number of Departments") +
-  theme_minimal()
+# --- Provinces ---
+provinces <- sort(unique(tidy_marriages$Province))
+cat("Number of provinces in marriages data:", length(provinces), "\n")
+cat("Sample provinces:", paste(head(provinces, 10), collapse = ", "), "...\n\n")
+
+# --- Education Levels  ---
+edu_cols   <- names(tidy_education)[-(1:2)]
+edu_levels <- unique(sub("_(Total|Male|Female)$", "", edu_cols))
+cat("Education levels available:", paste(edu_levels, collapse = ", "), "\n")
 
 ```
-
-This chart displays the total number of professors, associate professors, and doctorate-level faculty members.
-
-```{r}
-library(tidyr)
-
-df_staff <- scores %>%
-  mutate(
-    prof = as.numeric(X188),
-    assoc = as.numeric(X189),
-    dr = as.numeric(X190)
-  ) %>%
-  summarise(
-    Professors = sum(prof, na.rm = TRUE),
-    Associates = sum(assoc, na.rm = TRUE),
-    Doctors = sum(dr, na.rm = TRUE)
-  ) %>%
-  pivot_longer(cols = everything(), names_to = "Title", values_to = "Count")
-
-ggplot(df_staff, aes(x = Title, y = Count, fill = Title)) +
-  geom_col(width = 0.4) +
-  geom_text(aes(label = Count), vjust = 1, size = 4) +
-  labs(title = "Total Academic Staff Distribution",
-       x = "Title",
-       y = "Count") +
-  theme_minimal()
-
-```
-
-This table shows the cities with the highest number of students in universities.
-
-```{r}
-df_city <- scores %>%
-  mutate(
-    city = university,
-    placed = as.numeric(X11)
-  ) %>%
-  filter(!is.na(city), !is.na(placed)) %>%
-  group_by(city) %>%
-  summarise(total_placed = sum(placed, na.rm = TRUE)) %>%
-  arrange(desc(total_placed)) %>%
-  slice(1:10)
-
-ggplot(df_city, aes(x = reorder(city, total_placed), y = total_placed)) +
-  geom_col(fill = "steelblue", width = 0.5) +
-  geom_text(aes(label = total_placed), hjust = 1, size = 4) +
-  coord_flip() +
-  labs(
-    title = "Top 10 Cities by Student Placement",
-    x = "City",
-    y = "Total Students Placed"
-  ) +
-  theme_minimal()
-
-
-```
-
 ## 3.2 Trend Analysis
 
 xxxx
