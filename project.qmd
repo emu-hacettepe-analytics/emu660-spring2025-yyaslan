@@ -92,6 +92,7 @@ education_years <- sort(unique(tidy_education$Year))
 cat("Marriages data covers years:", marriage_years, "\n")
 cat("Education data covers years:", education_years, "\n")
 ```
+
 ```{r data-overview, echo=TRUE}
 
 # --- Provinces ---
@@ -105,13 +106,758 @@ edu_levels <- unique(sub("_(Total|Male|Female)$", "", edu_cols))
 cat("Education levels available:", paste(edu_levels, collapse = ", "), "\n")
 
 ```
+
 ## 3.2 Trend Analysis
 
-xxxx
+Tidy data has been combined according to city and year to use the data more effectively.
+
+```{r}
+
+combined_data <- merge(tidy_education, tidy_marriages, by = c("Province", "Year"))
+
+```
+
+How the educational levels of people in Turkey change by year is shown with line graphs.
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(stringi)
+
+combined_data |>
+  mutate(Province = stri_trans_general(Province, "Latin-ASCII"),
+         Province = tolower(Province)) |>
+  filter(Province == "turkiye") |>
+  select(Year, Illiterate_Total, Literate_without_diploma_Total, 
+         Primary1_school_Total, Primary2_school_Total, 
+         Lower_secondary_school_Total, High_school_Total, 
+         Universities_Total, Master_Total, Doctorate_Total) |>
+  mutate(Year = as.numeric(Year)) |>
+  pivot_longer(
+    cols = -Year,
+    names_to = "Education_Level",
+    values_to = "People"
+  ) |>
+  filter(!is.na(People)) |>
+  mutate(People = People / 1000) |>
+  mutate(Education_Level = recode(Education_Level,
+                                  "Illiterate_Total" = "Illiterate",
+                                  "Literate_without_diploma_Total" = "Literate_no_diploma",
+                                  "Primary1_school_Total" = "Primary 1",
+                                  "Primary2_school_Total" = "Primary 2",
+                                  "Lower_secondary_school_Total" = "Lower Secondary",
+                                  "High_school_Total" = "High School",
+                                  "Universities_Total" = "University",
+                                  "Master_Total" = "Master",
+                                  "Doctorate_Total" = "Doctorate")) |>
+  mutate(Education_Level = factor(Education_Level, levels = c(
+    "Illiterate", "Literate_no_diploma", "Primary 1", "Primary 2", 
+    "Lower Secondary", "High School", "University", "Master", "Doctorate"
+  ))) |>
+  ggplot(aes(x = Year, y = People)) +
+  geom_line() +
+  facet_wrap(~ Education_Level, scales = "free_y", nrow = 3) +
+  scale_x_continuous(breaks = seq(2010, 2024, by = 2)) +
+  labs(title = "Turkey Education Levels - Small Multiple Plots",
+       x = "Year", y = "People (Thousands)") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+
+
+```
+
+In the same way, it was shown how the percentage of first cousin marriages in Turkey varies by year.
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(stringi)
+
+combined_data |>
+  mutate(Province = stri_trans_general(Province, "Latin-ASCII"),
+         Province = tolower(Province)) |>
+  filter(Province == "turkiye") |>
+  mutate(Year = as.numeric(Year)) |>
+  ggplot(aes(x = Year, y = Proportion)) +
+  geom_point(color = "steelblue") +
+  geom_text(aes(label = paste0(round(Proportion, 2), "%")),hjust=-0.3, vjust =-0.3, size = 3) +
+  scale_x_continuous(breaks = seq(2010, 2024, by = 2)) +
+  labs(title = "Turkey - First Cousin Marriage Percentage Over Years",
+       x = "Year", y = "Percentage") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+
+
+```
+
+The increase after **2020** is thought to be because people could not socialize after the global pandemic and spent time with their closest acquaintances.
 
 ## 3.3 Model Fitting
 
-xxxxxx
+To observe the compatibility of the two data models, first of all, the data according to the increase in the level of education for Turkey.
+
+### 3.3.1 Illiterate Population & Cousin Marriage Rate
+
+The data suggests a possible positive association between the proportion of illiterate individuals and cousin marriage rates in Turkey. As literacy improves over time, a downward shift in consanguineous marriage patterns can be observed.
+
+```{r}
+edu_var <- "Illiterate_Total"
+
+plot_data <- combined_data |>
+  mutate(Province = stri_trans_general(Province, "Latin-ASCII"),
+         Province = tolower(Province)) |>
+  filter(Province == "turkiye") |>
+  mutate(Year = as.numeric(Year),
+         Education_k = .data[[edu_var]] / 1000,
+         Proportion_percent = Proportion) |>
+  select(Year, Education_k, Proportion_percent)
+
+
+min_y <- min(plot_data$Education_k)
+max_y <- max(plot_data$Education_k)
+
+plot_data <- plot_data |>
+  mutate(Proportion_scaled = ((Proportion_percent - min(Proportion_percent)) /
+                              (max(Proportion_percent) - min(Proportion_percent))) *
+                             (max_y - min_y) + min_y)
+
+
+ggplot(plot_data, aes(x = Year)) +
+  geom_line(aes(y = Education_k, color = "Illiterate (1000s)"), size = 1.2) +
+  geom_point(aes(y = Proportion_scaled, color = "Cousin Marriage (%)"), size = 2.5) +
+  geom_text(aes(y = Proportion_scaled, label = paste0(round(Proportion_percent, 2), "%")),
+            vjust = -0.8, size = 3) +
+  scale_x_continuous(breaks = seq(2010, 2024, 2)) +
+  scale_y_continuous(
+    name = "Illiterate Individuals (1000s)",
+    sec.axis = sec_axis(
+      trans = ~ (.-min_y) * (max(plot_data$Proportion_percent) - min(plot_data$Proportion_percent)) /
+                      (max_y - min_y) + min(plot_data$Proportion_percent),
+      name = "Cousin Marriage (%)"
+    )
+  ) +
+  labs(
+    title = "Illiterate Population & Cousin Marriage Rate (Turkey)",
+    x = "Year", color = ""
+  ) +
+  theme_minimal() +
+  theme(legend.position = "top", axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+### 3.3.2 Primary School Graduates & Cousin Marriage (%)
+
+The expansion of primary education in Turkey has played a key role in shaping social behaviors. This chart shows that increases in primary school graduation are associated with reductions in cousin marriage rates over time.
+
+```{r}
+
+plot_data <- combined_data |>
+  mutate(Province = stri_trans_general(Province, "Latin-ASCII"),
+         Province = tolower(Province)) |>
+  filter(Province == "turkiye") |>
+  mutate(
+    Year = as.numeric(Year),
+    Education_k = (Primary1_school_Total + Primary2_school_Total) / 1000,
+    Proportion_percent = Proportion
+  ) |>
+  select(Year, Education_k, Proportion_percent)
+
+min_y <- min(plot_data$Education_k)
+max_y <- max(plot_data$Education_k)
+
+plot_data <- plot_data |>
+  mutate(Proportion_scaled = ((Proportion_percent - min(Proportion_percent)) /
+                              (max(Proportion_percent) - min(Proportion_percent))) *
+                             (max_y - min_y) + min_y)
+
+
+ggplot(plot_data, aes(x = Year)) +
+  geom_line(aes(y = Education_k, color = "Primary School (1000s)"), size = 1.2) +
+  geom_point(aes(y = Proportion_scaled, color = "Cousin Marriage (%)"), size = 2.5) +
+  geom_text(aes(y = Proportion_scaled, label = paste0(round(Proportion_percent, 2), "%")),
+            vjust = -0.8, size = 3) +
+  scale_x_continuous(breaks = seq(2010, 2024, 2)) +
+  scale_y_continuous(
+    name = "Primary School Graduates (1000s)",
+    sec.axis = sec_axis(
+      trans = ~ (.-min_y) * (max(plot_data$Proportion_percent) - min(plot_data$Proportion_percent)) /
+                      (max_y - min_y) + min(plot_data$Proportion_percent),
+      name = "Cousin Marriage (%)"
+    )
+  ) +
+  labs(
+    title = "Primary School Graduates & Cousin Marriage Rate (Turkey)",
+    x = "Year", color = ""
+  ) +
+  theme_minimal() +
+  theme(legend.position = "top", axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+### 3.3.3 Lower Secondary School Graduates & Cousin Marriage (%)
+
+In Turkey, the transition to the 4+4+4 education model in the 2012-2013 academic year explains the acceleration increase in the graph.
+
+```{r}
+edu_var <- "Lower_secondary_school_Total"
+
+plot_data <- combined_data |>
+  mutate(Province = stri_trans_general(Province, "Latin-ASCII"),
+         Province = tolower(Province)) |>
+  filter(Province == "turkiye") |>
+  mutate(
+    Year = as.numeric(Year),
+    Education_k = .data[[edu_var]] / 1000,
+    Proportion_percent = Proportion
+  ) |>
+  select(Year, Education_k, Proportion_percent)
+
+min_y <- min(plot_data$Education_k)
+max_y <- max(plot_data$Education_k)
+
+plot_data <- plot_data |>
+  mutate(Proportion_scaled = ((Proportion_percent - min(Proportion_percent)) /
+                              (max(Proportion_percent) - min(Proportion_percent))) *
+                             (max_y - min_y) + min_y)
+
+ggplot(plot_data, aes(x = Year)) +
+  geom_line(aes(y = Education_k, color = "Lower Secondary School (1000s)"), size = 1.2) +
+  geom_point(aes(y = Proportion_scaled, color = "Cousin Marriage (%)"), size = 2.5) +
+  geom_text(aes(y = Proportion_scaled, label = paste0(round(Proportion_percent, 2), "%")),
+            vjust = -0.8, size = 3) +
+  scale_x_continuous(breaks = seq(2010, 2024, 2)) +
+  scale_y_continuous(
+    name = "Lower Secondary School Graduates (1000s)",
+    sec.axis = sec_axis(
+      trans = ~ (.-min_y) * (max(plot_data$Proportion_percent) - min(plot_data$Proportion_percent)) /
+                      (max_y - min_y) + min(plot_data$Proportion_percent),
+      name = "Cousin Marriage (%)"
+    )
+  ) +
+  labs(
+    title = "Lower Secondary School Graduates & Cousin Marriage Rate (Turkey)",
+    x = "Year", color = ""
+  ) +
+  theme_minimal() +
+  theme(legend.position = "top", axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+### 3.3.4 High School Graduates& Cousin Marriage (%)
+
+In Turkey, as the number of high school graduates has increased steadily over the years, the rate of cousin marriages has shown a noticeable decline. This trend implies a possible inverse relationship between secondary education completion and consanguineous marriage practices.
+
+```{r}
+edu_var <- "High_school_Total"
+
+plot_data <- combined_data |>
+  mutate(Province = stri_trans_general(Province, "Latin-ASCII"),
+         Province = tolower(Province)) |>
+  filter(Province == "turkiye") |>
+  mutate(
+    Year = as.numeric(Year),
+    Education_k = .data[[edu_var]] / 1000,
+    Proportion_percent = Proportion
+  ) |>
+  select(Year, Education_k, Proportion_percent)
+
+min_y <- min(plot_data$Education_k)
+max_y <- max(plot_data$Education_k)
+
+plot_data <- plot_data |>
+  mutate(Proportion_scaled = ((Proportion_percent - min(Proportion_percent)) /
+                              (max(Proportion_percent) - min(Proportion_percent))) *
+                             (max_y - min_y) + min_y)
+
+ggplot(plot_data, aes(x = Year)) +
+  geom_line(aes(y = Education_k, color = "High School (1000s)"), size = 1.2) +
+  geom_point(aes(y = Proportion_scaled, color = "Cousin Marriage (%)"), size = 2.5) +
+  geom_text(aes(y = Proportion_scaled, label = paste0(round(Proportion_percent, 2), "%")),
+            vjust = -0.8, size = 3) +
+  scale_x_continuous(breaks = seq(2010, 2024, 2)) +
+  scale_y_continuous(
+    name = "High School Graduates (1000s)",
+    sec.axis = sec_axis(
+      trans = ~ (.-min_y) * (max(plot_data$Proportion_percent) - min(plot_data$Proportion_percent)) /
+                      (max_y - min_y) + min(plot_data$Proportion_percent),
+      name = "Cousin Marriage (%)"
+    )
+  ) +
+  labs(
+    title = "High School Graduates & Cousin Marriage Rate (Turkey)",
+    x = "Year", color = ""
+  ) +
+  theme_minimal() +
+  theme(legend.position = "top", axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+
+```
+
+### 3.5.5 Universities Graduates & Cousin Marriage (%)
+
+Over the years, as the number of university graduates in Turkey increased, a steady decline in the rate of cousin marriages can be observed. This trend suggests a potential negative correlation between higher education attainment and consanguineous marriage preferences.
+
+```{r}
+edu_var <- "Universities_Total"
+
+plot_data <- combined_data |>
+  mutate(Province = stri_trans_general(Province, "Latin-ASCII"),
+         Province = tolower(Province)) |>
+  filter(Province == "turkiye") |>
+  mutate(
+    Year = as.numeric(Year),
+    Education_k = .data[[edu_var]] / 1000,
+    Proportion_percent = Proportion
+  ) |>
+  select(Year, Education_k, Proportion_percent)
+
+min_y <- min(plot_data$Education_k)
+max_y <- max(plot_data$Education_k)
+
+plot_data <- plot_data |>
+  mutate(Proportion_scaled = ((Proportion_percent - min(Proportion_percent)) /
+                              (max(Proportion_percent) - min(Proportion_percent))) *
+                             (max_y - min_y) + min_y)
+
+ggplot(plot_data, aes(x = Year)) +
+  geom_line(aes(y = Education_k, color = "University (1000s)"), size = 1.2) +
+  geom_point(aes(y = Proportion_scaled, color = "Cousin Marriage (%)"), size = 2.5) +
+  geom_text(aes(y = Proportion_scaled, label = paste0(round(Proportion_percent, 2), "%")),
+            vjust = -0.8, size = 3) +
+  scale_x_continuous(breaks = seq(2010, 2024, 2)) +
+  scale_y_continuous(
+    name = "University Graduates (1000s)",
+    sec.axis = sec_axis(
+      trans = ~ (.-min_y) * (max(plot_data$Proportion_percent) - min(plot_data$Proportion_percent)) /
+                      (max_y - min_y) + min(plot_data$Proportion_percent),
+      name = "Cousin Marriage (%)"
+    )
+  ) +
+  labs(
+    title = "University Graduates & Cousin Marriage Rate (Turkey)",
+    x = "Year", color = ""
+  ) +
+  theme_minimal() +
+  theme(legend.position = "top", axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+### 3.5.5 Master???s Degree Graduates & Cousin Marriage (%)
+
+A rising trend in master???s degree graduations appears to align with a gradual decrease in cousin marriage rates. This relationship may indicate that individuals with postgraduate education are less likely to engage in consanguineous marriages.
+
+```{r}
+edu_var <- "Master_Total"
+
+plot_data <- combined_data |>
+  mutate(Province = stri_trans_general(Province, "Latin-ASCII"),
+         Province = tolower(Province)) |>
+  filter(Province == "turkiye") |>
+  mutate(
+    Year = as.numeric(Year),
+    Education_k = .data[[edu_var]] / 1000,
+    Proportion_percent = Proportion
+  ) |>
+  select(Year, Education_k, Proportion_percent)
+
+min_y <- min(plot_data$Education_k)
+max_y <- max(plot_data$Education_k)
+
+plot_data <- plot_data |>
+  mutate(Proportion_scaled = ((Proportion_percent - min(Proportion_percent)) /
+                              (max(Proportion_percent) - min(Proportion_percent))) *
+                             (max_y - min_y) + min_y)
+
+ggplot(plot_data, aes(x = Year)) +
+  geom_line(aes(y = Education_k, color = "Master's Degree (1000s)"), size = 1.2) +
+  geom_point(aes(y = Proportion_scaled, color = "Cousin Marriage (%)"), size = 2.5) +
+  geom_text(aes(y = Proportion_scaled, label = paste0(round(Proportion_percent, 2), "%")),
+            vjust = -0.8, size = 3) +
+  scale_x_continuous(breaks = seq(2010, 2024, 2)) +
+  scale_y_continuous(
+    name = "Master's Degree Graduates (1000s)",
+    sec.axis = sec_axis(
+      trans = ~ (.-min_y) * (max(plot_data$Proportion_percent) - min(plot_data$Proportion_percent)) /
+                      (max_y - min_y) + min(plot_data$Proportion_percent),
+      name = "Cousin Marriage (%)"
+    )
+  ) +
+  labs(
+    title = "Master's Degree Graduates & Cousin Marriage Rate (Turkey)",
+    x = "Year", color = ""
+  ) +
+  theme_minimal() +
+  theme(legend.position = "top", axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+### 3.5.6 Doctorate Graduates & Cousin Marriage (%)
+
+As the number of individuals attaining doctoral degrees increases, cousin marriage rates show a significant downward trend. This supports the hypothesis that advanced education is inversely associated with traditional marriage practices such as consanguinity.
+
+```{r}
+edu_var <- "Doctorate_Total"
+
+plot_data <- combined_data |>
+  mutate(Province = stri_trans_general(Province, "Latin-ASCII"),
+         Province = tolower(Province)) |>
+  filter(Province == "turkiye") |>
+  mutate(
+    Year = as.numeric(Year),
+    Education_k = .data[[edu_var]] / 1000,
+    Proportion_percent = Proportion
+  ) |>
+  select(Year, Education_k, Proportion_percent)
+
+min_y <- min(plot_data$Education_k)
+max_y <- max(plot_data$Education_k)
+
+plot_data <- plot_data |>
+  mutate(Proportion_scaled = ((Proportion_percent - min(Proportion_percent)) /
+                              (max(Proportion_percent) - min(Proportion_percent))) *
+                             (max_y - min_y) + min_y)
+
+ggplot(plot_data, aes(x = Year)) +
+  geom_line(aes(y = Education_k, color = "Doctorate (1000s)"), size = 1.2) +
+  geom_point(aes(y = Proportion_scaled, color = "Cousin Marriage (%)"), size = 2.5) +
+  geom_text(aes(y = Proportion_scaled, label = paste0(round(Proportion_percent, 2), "%")),
+            vjust = -0.8, size = 3) +
+  scale_x_continuous(breaks = seq(2010, 2024, 2)) +
+  scale_y_continuous(
+    name = "Doctorate Graduates (1000s)",
+    sec.axis = sec_axis(
+      trans = ~ (.-min_y) * (max(plot_data$Proportion_percent) - min(plot_data$Proportion_percent)) /
+                      (max_y - min_y) + min(plot_data$Proportion_percent),
+      name = "Cousin Marriage (%)"
+    )
+  ) +
+  labs(
+    title = "Doctorate Graduates & Cousin Marriage Rate (Turkey)",
+    x = "Year", color = ""
+  ) +
+  theme_minimal() +
+  theme(legend.position = "top", axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+### 3.5.7 Heat Maps of Education Levels in Turkey
+
+The animated maps below illustrate the spatial distribution of high school and higher education graduates across Turkish provinces over time. Color gradients represent the number of graduates (in thousands), while the labels highlight the top five and bottom five provinces each year.
+
+#### 3.5.7.1 High School Heat Map
+
+```{r}
+library(readxl)
+library(dplyr)
+library(stringi)
+library(ggplot2)
+library(sf)
+library(gganimate)
+
+
+turkiye <- st_read("turkey-geojson.json") %>%
+  mutate(il_adi = tolower(name),
+         il_adi = stri_trans_general(il_adi, "Latin-ASCII")) %>%
+  mutate(il_adi = case_when(
+    il_adi == "afyon" ~ "afyonkarahisar",
+    il_adi == "eskisehir" ~ "eskisehir",
+    il_adi == "mugla" ~ "mugla",
+    il_adi == "sanliurfa" ~ "sanliurfa",
+    il_adi == "kirikkale" ~ "kirikkale",
+    TRUE ~ il_adi
+  ))
+
+edu <- read_excel("tidy_education.xlsx") %>%
+  mutate(
+    Province = stri_trans_general(Province, "Latin-ASCII"),
+    Province = tolower(trimws(Province))
+  ) %>%
+  filter(Province != "turkiye") %>%
+  select(Year, il_adi = Province, mezun = High_school_Total) %>%
+  mutate(mezun = mezun / 1000)  # bin ki??i
+
+harita_df <- expand.grid(il_adi = unique(turkiye$il_adi), Year = unique(edu$Year)) %>%
+  left_join(edu, by = c("il_adi", "Year")) %>%
+  left_join(turkiye, by = "il_adi") %>%
+  st_as_sf()
+
+etiketler <- harita_df %>%
+  group_by(Year) %>%
+  mutate(
+    sira = rank(mezun, ties.method = "first"),
+    etiket = case_when(
+      sira <= 5 | sira >= (n() - 4) ~ paste0(round(mezun), "k"),
+      TRUE ~ NA_character_
+    ),
+    x = st_coordinates(st_centroid(geometry))[,1],
+    y = st_coordinates(st_centroid(geometry))[,2]
+  ) %>%
+  ungroup() %>%
+  mutate(
+    x = ifelse(il_adi == "istanbul", x + 0.7, x),
+    y = ifelse(il_adi == "istanbul", y + 0.3, y)
+  )
+
+
+p_high <- ggplot(etiketler) +
+  geom_sf(aes(fill = mezun, geometry = geometry), color = "white", linewidth = 0.2) +
+  geom_text(data = subset(etiketler, !is.na(etiket)), 
+            aes(x = x, y = y, label = etiket), 
+            size = 3, color = "black") +
+  scale_fill_viridis_c(option = "plasma", direction = -1, na.value = "grey90") +
+  labs(
+    title = "{closest_state} Y??l?? - Lise Mezunu Say??s?? (Bin Ki??i)",
+    fill = "Bin Ki??i"
+  ) +
+  theme_minimal() +
+  transition_states(Year, transition_length = 2, state_length = 1) +
+  ease_aes("cubic-in-out")
+
+
+```
+
+```{r, eval=FALSE}
+anim_save("lise.gif", animate(p_high, width = 800, height = 600, fps = 2, duration = 10))
+```
+![](lise.gif)
+
+#### 3.5.7.2 University Heat Map
+
+```{r}
+
+edu_uni <- read_excel("tidy_education.xlsx") %>%
+  mutate(
+    Province = stri_trans_general(Province, "Latin-ASCII"),
+    Province = tolower(trimws(Province))
+  ) %>%
+  filter(Province != "turkiye") %>%
+  select(Year, il_adi = Province, mezun = Universities_Total) %>%
+  mutate(mezun = mezun / 1000)
+
+
+harita_uni <- expand.grid(il_adi = unique(turkiye$il_adi), Year = unique(edu_uni$Year)) %>%
+  left_join(edu_uni, by = c("il_adi", "Year")) %>%
+  left_join(turkiye, by = "il_adi") %>%
+  st_as_sf()
+
+
+etiketler_uni <- harita_uni %>%
+  group_by(Year) %>%
+  mutate(
+    sira = rank(mezun, ties.method = "first"),
+    etiket = case_when(
+      sira <= 5 | sira >= (n() - 4) ~ paste0(round(mezun), "k"),
+      TRUE ~ NA_character_
+    ),
+    x = st_coordinates(st_centroid(geometry))[,1],
+    y = st_coordinates(st_centroid(geometry))[,2],
+    x = ifelse(il_adi == "istanbul", x + 0.7, x),
+    y = ifelse(il_adi == "istanbul", y + 0.3, y)
+  ) %>%
+  ungroup()
+
+
+p_uni <- ggplot(etiketler_uni) +
+  geom_sf(aes(fill = mezun, geometry = geometry), color = "white", linewidth = 0.2) +
+  geom_text(data = subset(etiketler_uni, !is.na(etiket)),
+            aes(x = x, y = y, label = etiket),
+            size = 3, color = "black") +
+  scale_fill_viridis_c(option = "plasma", direction = -1, na.value = "grey90") +
+  labs(
+    title = "{closest_state} ??? University Graduates (in Thousands)",
+    fill = "Thousand People"
+  ) +
+  theme_minimal() +
+  transition_states(Year, transition_length = 2, state_length = 1) +
+  ease_aes("cubic-in-out")
+
+```
+
+```{r, eval=FALSE}
+anim_save("uni.gif", animate(p_uni, width = 800, height = 600, fps = 2, duration = 10))
+
+```
+
+![](uni.gif)
+
+#### 3.5.7.3 Master's Heat Map
+
+```{r}
+
+edu_master <- read_excel("tidy_education.xlsx") %>%
+  mutate(
+    Province = stri_trans_general(Province, "Latin-ASCII"),
+    Province = tolower(trimws(Province))
+  ) %>%
+  filter(Province != "turkiye") %>%
+  select(Year, il_adi = Province, mezun = Master_Total) %>%
+  mutate(mezun = mezun / 1000)
+
+harita_master <- expand.grid(il_adi = unique(turkiye$il_adi), Year = unique(edu_master$Year)) %>%
+  left_join(edu_master, by = c("il_adi", "Year")) %>%
+  left_join(turkiye, by = "il_adi") %>%
+  st_as_sf()
+
+etiketler_master <- harita_master %>%
+  group_by(Year) %>%
+  mutate(
+    sira = rank(mezun, ties.method = "first"),
+       etiket = case_when(
+  sira <= 5 | sira >= (n() - 4) ~ ifelse(mezun < 1, 
+                                        as.character(round(mezun * 1000)), 
+                                        paste0(round(mezun), "k")),
+  TRUE ~ NA_character_
+),
+    x = st_coordinates(st_centroid(geometry))[,1],
+    y = st_coordinates(st_centroid(geometry))[,2],
+    x = ifelse(il_adi == "istanbul", x + 0.7, x),
+    y = ifelse(il_adi == "istanbul", y + 0.3, y)
+  ) %>%
+  ungroup()
+
+p_master <- ggplot(etiketler_master) +
+  geom_sf(aes(fill = mezun, geometry = geometry), color = "white", linewidth = 0.2) +
+  geom_text(data = subset(etiketler_master, !is.na(etiket)),
+            aes(x = x, y = y, label = etiket),
+            size = 3, color = "black") +
+  scale_fill_viridis_c(option = "plasma", direction = -1, na.value = "grey90") +
+  labs(
+    title = "{closest_state} ??? Master???s Graduates (in Thousands)",
+    fill = "Thousand People"
+  ) +
+  theme_minimal() +
+  transition_states(Year, transition_length = 2, state_length = 1) +
+  ease_aes("cubic-in-out")
+
+```
+
+```{r, eval=FALSE}
+anim_save("master.gif", animate(p_master, width = 800, height = 600, fps = 2, duration = 10))
+
+```
+
+![](master.gif)
+
+#### 3.5.7.4 Doctorate Heat Map
+
+```{r}
+edu_phd <- read_excel("tidy_education.xlsx") %>%
+  mutate(
+    Province = stri_trans_general(Province, "Latin-ASCII"),
+    Province = tolower(trimws(Province))
+  ) %>%
+  filter(Province != "turkiye") %>%
+  select(Year, il_adi = Province, mezun = Doctorate_Total) %>%
+  mutate(mezun = mezun / 1000)
+
+harita_phd <- expand.grid(il_adi = unique(turkiye$il_adi), Year = unique(edu_phd$Year)) %>%
+  left_join(edu_phd, by = c("il_adi", "Year")) %>%
+  left_join(turkiye, by = "il_adi") %>%
+  st_as_sf()
+
+etiketler_phd <- harita_phd %>%
+  group_by(Year) %>%
+  mutate(
+    sira = rank(mezun, ties.method = "first"),
+    etiket = case_when(
+  sira <= 5 | sira >= (n() - 4) ~ ifelse(mezun < 1, 
+                                        as.character(round(mezun * 1000)), 
+                                        paste0(round(mezun), "k")),
+  TRUE ~ NA_character_
+),
+    x = st_coordinates(st_centroid(geometry))[,1],
+    y = st_coordinates(st_centroid(geometry))[,2],
+    x = ifelse(il_adi == "istanbul", x + 0.7, x),
+    y = ifelse(il_adi == "istanbul", y + 0.3, y)
+  ) %>%
+  ungroup()
+
+p_phd <- ggplot(etiketler_phd) +
+  geom_sf(aes(fill = mezun, geometry = geometry), color = "white", linewidth = 0.2) +
+  geom_text(data = subset(etiketler_phd, !is.na(etiket)),
+            aes(x = x, y = y, label = etiket),
+            size = 3, color = "black") +
+  scale_fill_viridis_c(option = "plasma", direction = -1, na.value = "grey90") +
+  labs(
+    title = "{closest_state} ??? Doctorate Graduates (in Thousands)",
+    fill = "Thousand People"
+  ) +
+  theme_minimal() +
+  transition_states(Year, transition_length = 2, state_length = 1) +
+  ease_aes("cubic-in-out")
+
+
+```
+
+```{r, eval=FALSE}
+anim_save("phd.gif", animate(p_phd, width = 800, height = 600, fps = 2, duration = 10))
+
+```
+
+![](phd.gif)
+
+### 3.5.8 Heat Maps of Cousin Marriage in Turkey
+
+ This animated map shows how cousin marriage rates change across provinces in Turkey over the years. Darker colors mean higher rates. We can see that eastern and southeastern provinces usually have the highest rates, while western provinces have much lower ones. 
+
+```{r}
+harita_evlilik <- expand.grid(il_adi = unique(turkiye$il_adi), Year = unique(combined_data$Year)) %>%
+  left_join(combined_data %>%
+              mutate(il_adi = tolower(stri_trans_general(Province, "Latin-ASCII"))),
+            by = c("il_adi", "Year")) %>%
+  left_join(turkiye, by = "il_adi") %>%
+  st_as_sf()
+
+etiketler_evlilik <- harita_evlilik %>%
+  group_by(Year) %>%
+  mutate(
+    sira = rank(Proportion, ties.method = "first"),
+   etiket = case_when(
+  sira <= 5 | sira >= (n() - 4) ~ paste0(round(Proportion, 1), "%"),
+  TRUE ~ NA_character_
+),
+
+    x = st_coordinates(st_centroid(geometry))[,1],
+    y = st_coordinates(st_centroid(geometry))[,2],
+    x = ifelse(il_adi == "istanbul", x + 1.5, x),
+    y = ifelse(il_adi == "istanbul", y + 1.0, y)
+  ) %>%
+  ungroup()
+
+p_evlilik <- ggplot(etiketler_evlilik) +
+  geom_sf(aes(fill = Proportion, geometry = geometry), color = "white", linewidth = 0.2) +
+  geom_text(data = subset(etiketler_evlilik, !is.na(etiket)),
+            aes(x = x, y = y, label = etiket),
+            size = 3, color = "black") +
+  scale_fill_distiller(
+  palette = "YlOrRd",
+  direction = 1,
+  na.value = "grey90",
+  name = "Proportion (%)",
+  labels = waiver()
+)+
+  labs(
+    title = "{closest_state} ??? Consanguineous Marriage Rate by Province",
+    fill = "Proportion"
+  ) +
+  theme_minimal() +
+  transition_states(Year, transition_length = 2, state_length = 1) +
+  ease_aes("cubic-in-out")
+
+```
+
+```{r, eval=FALSE}
+anim_save("consanguinity_rate.gif", animate(p_evlilik, width = 800, height = 600, fps = 2, duration = 10))
+
+```
+
+![](consanguinity_rate.gif)
 
 ## 3.4 Results
 
@@ -119,4 +865,4 @@ xxxxxx
 
 # 4. Results and Key Takeaways
 
-xxxxxx
+xxxxxx :::

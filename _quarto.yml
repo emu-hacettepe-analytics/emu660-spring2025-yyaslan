@@ -49,6 +49,9 @@ format:
       dark: cyborg
     css: styles.css
 
+execute:
+  echo: true
+  shiny: true
 
 editor: visual
 
