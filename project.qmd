@@ -1,5 +1,20 @@
 ---
 title: "The Relationship Between Educational Level and The Number of First Cousin Marriages"
+
+format:
+  html:
+    code-fold: true
+    code-summary: "Show the code"
+    code-copy: true
+    embed-resources: true
+  pdf:
+    colorlinks: true
+    papersize: a4
+    fontsize: 11pt
+    margin-left: 2cm
+    margin-right: 2cm
+    margin-top: 2cm
+    margin-bottom: 2cm
 ---
 
 Welcome to my project page.
@@ -40,7 +55,7 @@ chose these data sets because it is necessary to examine the level of education 
 
 -   **Loading & Header Processing**
 
-    1.  Read both Excel files using `readxl::read_excel(..., col_names = FALSE)` to preserve raw header rows.
+    1.  Read both Excel files using `readxl` to preserve raw header rows.
 
     ```{r}
     library(readxl)
@@ -448,7 +463,7 @@ ggplot(plot_data, aes(x = Year)) +
 
 ```
 
-### 3.5.5 Master???s Degree Graduates & Cousin Marriage (%)
+### 3.5.5 Masters Degree Graduates & Cousin Marriage (%)
 
 A rising trend in master???s degree graduations appears to align with a gradual decrease in cousin marriage rates. This relationship may indicate that individuals with postgraduate education are less likely to engage in consanguineous marriages.
 
@@ -580,7 +595,7 @@ edu <- read_excel("tidy_education.xlsx") |>
   ) |>
   filter(Province != "turkiye") |>
   select(Year, il_adi = Province, mezun = High_school_Total) |>
-  mutate(mezun = mezun / 1000)  # bin ki??i
+  mutate(mezun = mezun / 1000)
 
 harita_df <- expand.grid(il_adi = unique(turkiye$il_adi), Year = unique(edu$Year)) |>
   left_join(edu, by = c("il_adi", "Year")) |>
@@ -612,8 +627,8 @@ p_high <- ggplot(etiketler) +
             size = 3, color = "black") +
   scale_fill_viridis_c(option = "plasma", direction = -1, na.value = "grey90") +
   labs(
-    title = "{closest_state} Y??l?? - Lise Mezunu Say??s?? (Bin Ki??i)",
-    fill = "Bin Ki??i"
+    title = "{closest_state} High School Graduates (in Thousand)",
+    fill = "Thousand People"
   ) +
   theme_minimal() +
   transition_states(Year, transition_length = 2, state_length = 1) +
@@ -624,9 +639,21 @@ p_high <- ggplot(etiketler) +
 
 ```{r, eval=FALSE}
 anim_save("lise.gif", animate(p_high, width = 800, height = 600, fps = 2, duration = 10))
+library(magick)
+image_read("lise.gif") |>
+  .[length(.)] |>  # son kare
+  image_convert(format = "png", type = "truecolor") |>
+  image_write("lise.png")
 ```
 
-![](lise.gif)
+```{r, echo=FALSE, eval=knitr::is_html_output()}
+knitr::include_graphics("lise.gif")
+```
+
+```{r echo=FALSE, eval = knitr::is_latex_output()}
+knitr::include_graphics("lise.png")
+```
+
 
 #### 3.5.7.2 University Heat Map
 
@@ -671,7 +698,7 @@ p_uni <- ggplot(etiketler_uni) +
             size = 3, color = "black") +
   scale_fill_viridis_c(option = "plasma", direction = -1, na.value = "grey90") +
   labs(
-    title = "{closest_state} ??? University Graduates (in Thousands)",
+    title = "{closest_state} University Graduates (in Thousands)",
     fill = "Thousand People"
   ) +
   theme_minimal() +
@@ -682,10 +709,20 @@ p_uni <- ggplot(etiketler_uni) +
 
 ```{r, eval=FALSE}
 anim_save("uni.gif", animate(p_uni, width = 800, height = 600, fps = 2, duration = 10))
-
+library(magick)
+image_read("uni.gif") |>
+  .[length(.)] |>
+  image_convert(format = "png", type = "truecolor") |>
+  image_write("uni.png")
 ```
 
-![](uni.gif)
+```{r, echo=FALSE, eval=knitr::is_html_output()}
+knitr::include_graphics("uni.gif")
+```
+
+```{r echo=FALSE, eval = knitr::is_latex_output()}
+knitr::include_graphics("uni.png")
+```
 
 #### 3.5.7.3 Master's Heat Map
 
@@ -729,7 +766,7 @@ p_master <- ggplot(etiketler_master) +
             size = 3, color = "black") +
   scale_fill_viridis_c(option = "plasma", direction = -1, na.value = "grey90") +
   labs(
-    title = "{closest_state} ??? Master???s Graduates (in Thousands)",
+    title = "{closest_state} Masters Graduates (in Thousands)",
     fill = "Thousand People"
   ) +
   theme_minimal() +
@@ -740,10 +777,21 @@ p_master <- ggplot(etiketler_master) +
 
 ```{r, eval=FALSE}
 anim_save("master.gif", animate(p_master, width = 800, height = 600, fps = 2, duration = 10))
-
+library(magick)
+image_read("master.gif") |>
+  .[length(.)] |>
+  image_convert(format = "png", type = "truecolor") |>
+  image_write("master.png")
 ```
 
-![](master.gif)
+```{r, echo=FALSE, eval=knitr::is_html_output()}
+knitr::include_graphics("master.gif")
+```
+
+```{r echo=FALSE, eval = knitr::is_latex_output()}
+knitr::include_graphics("master.png")
+```
+
 
 #### 3.5.7.4 Doctorate Heat Map
 
@@ -786,7 +834,7 @@ p_phd <- ggplot(etiketler_phd) +
             size = 3, color = "black") +
   scale_fill_viridis_c(option = "plasma", direction = -1, na.value = "grey90") +
   labs(
-    title = "{closest_state} ??? Doctorate Graduates (in Thousands)",
+    title = "{closest_state} Doctorate Graduates (in Thousands)",
     fill = "Thousand People"
   ) +
   theme_minimal() +
@@ -798,10 +846,21 @@ p_phd <- ggplot(etiketler_phd) +
 
 ```{r, eval=FALSE}
 anim_save("phd.gif", animate(p_phd, width = 800, height = 600, fps = 2, duration = 10))
-
+library(magick)
+image_read("phd.gif") |>
+  .[length(.)] |>
+  image_convert(format = "png", type = "truecolor") |>
+  image_write("phd.png")
 ```
 
-![](phd.gif)
+```{r, echo=FALSE, eval=knitr::is_html_output()}
+knitr::include_graphics("phd.gif")
+```
+
+```{r echo=FALSE, eval = knitr::is_latex_output()}
+knitr::include_graphics("phd.png")
+```
+
 
 ### 3.5.8 Heat Maps of Cousin Marriage in Turkey
 
@@ -844,7 +903,7 @@ p_evlilik <- ggplot(etiketler_evlilik) +
   labels = waiver()
 )+
   labs(
-    title = "{closest_state} ??? Consanguineous Marriage Rate by Province",
+    title = "{closest_state} Consanguineous Marriage Rate by Province",
     fill = "Proportion"
   ) +
   theme_minimal() +
@@ -855,10 +914,21 @@ p_evlilik <- ggplot(etiketler_evlilik) +
 
 ```{r, eval=FALSE}
 anim_save("consanguinity_rate.gif", animate(p_evlilik, width = 800, height = 600, fps = 2, duration = 10))
-
+library(magick)
+image_read("consanguinity_rate.gif") |>
+  .[length(.)] |>
+  image_convert(format = "png", type = "truecolor") |>
+  image_write("consanguinity_rate.png")
 ```
 
-![](consanguinity_rate.gif)
+```{r, echo=FALSE, eval=knitr::is_html_output()}
+knitr::include_graphics("consanguinity_rate.gif")
+```
+
+```{r echo=FALSE, eval = knitr::is_latex_output()}
+knitr::include_graphics("consanguinity_rate.png")
+```
+
 
 ## 3.4 Regression Analysis
 
@@ -887,16 +957,20 @@ summary(model)
 
 In this regression model, we examined how the relative share of graduates at different education levels affects cousin marriage rates. The dependent variable is the cousin marriage proportion, and the predictors are the ratios of high school, university, master???s, and PhD graduates among all graduates.
 
-The results show that high school, university, and master???s graduate shares are all positively associated with cousin marriage rate. Surprisingly, the coefficient signs are all positive, but the interpretation depends on the structure of the ratios.
+The results show that high school, university, and masters graduate shares are all positively associated with cousin marriage rate. Surprisingly, the coefficient signs are all positive, but the interpretation depends on the structure of the ratios.
 
 The coefficient for **phd_ratio is marked as NA** due to perfect multicollinearity ??? meaning its value is automatically determined by the others and cannot be estimated separately. This happens because the ratios sum to 1, so one of them must be dropped from the model.
 
 **The model explains around 20.5% of the variation in cousin marriage rates (Adjusted R?? = 0.205)**, which is reasonable given that cultural and regional factors are not included. **The model is statistically significant overall (p \< 0.001).**
 
-## 3.5 Results
-
-xxxxxx
-
 # 4. Results and Key Takeaways
 
-xxxxxx :::
+This study examines the relationship between education levels and first cousin marriage rates based on provinces in Turkey, both by visualizing the relationship on a map and by performing regression analysis.
+
+A normalized data set was created by combining education data and inbreeding data, thus enabling comparisons to be made both over time and between provinces.
+
+The established regression model shows that the rates of first cousin marriages are lower in provinces with a high level of education. This suggests that there may be an inverse relationship between educational level and first cousin marriages.
+
+A predictive analysis was performed with a linear regression model using normalized training ratios. The model showed significant results and explained about 20% of the change in the first cousin marriages rate. He can talk about a socio-cultural structure to explain the rest of the part. But the scope of this research includes educational levels.
+
+These findings show that increasing access to higher education, especially in regions where first-cousin marriage is common, may indirectly reduce these rates.
