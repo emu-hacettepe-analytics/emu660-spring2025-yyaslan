@@ -654,7 +654,6 @@ knitr::include_graphics("lise.gif")
 knitr::include_graphics("lise.png")
 ```
 
-
 #### 3.5.7.2 University Heat Map
 
 ```{r}
@@ -792,7 +791,6 @@ knitr::include_graphics("master.gif")
 knitr::include_graphics("master.png")
 ```
 
-
 #### 3.5.7.4 Doctorate Heat Map
 
 ```{r}
@@ -861,7 +859,6 @@ knitr::include_graphics("phd.gif")
 knitr::include_graphics("phd.png")
 ```
 
-
 ### 3.5.8 Heat Maps of Cousin Marriage in Turkey
 
 This animated map shows how cousin marriage rates change across provinces in Turkey over the years. Darker colors mean higher rates. We can see that eastern and southeastern provinces usually have the highest rates, while western provinces have much lower ones.
@@ -929,7 +926,6 @@ knitr::include_graphics("consanguinity_rate.gif")
 knitr::include_graphics("consanguinity_rate.png")
 ```
 
-
 ## 3.4 Regression Analysis
 
 In this analysis, we wanted to see if education levels have an effect on cousin marriage rates in Turkey. For this, we built a regression model where the cousin marriage rate is the outcome, and the shares of high school, university, master???s, and PhD graduates are the predictors.
@@ -967,10 +963,10 @@ The coefficient for **phd_ratio is marked as NA** due to perfect multicollineari
 
 This study examines the relationship between education levels and first cousin marriage rates based on provinces in Turkey, both by visualizing the relationship on a map and by performing regression analysis.
 
-A normalized data set was created by combining education data and inbreeding data, thus enabling comparisons to be made both over time and between provinces.
+A normalized data set was created by combining education data and first cousin marriage data, thus enabling comparisons to be made both over time and between provinces.
 
 The established regression model shows that the rates of first cousin marriages are lower in provinces with a high level of education. This suggests that there may be an inverse relationship between educational level and first cousin marriages.
 
-A predictive analysis was performed with a linear regression model using normalized training ratios. The model showed significant results and explained about 20% of the change in the first cousin marriages rate. He can talk about a socio-cultural structure to explain the rest of the part. But the scope of this research includes educational levels.
+A predictive analysis was performed with a linear regression model using normalized education ratios. The model showed significant results and explained about 20% of the change in the first cousin marriage rate. It can be talked about a socio-cultural structure to explain the rest of the part. But the scope of this research includes educational levels.
 
-These findings show that increasing access to higher education, especially in regions where first-cousin marriage is common, may indirectly reduce these rates.
+These findings show that increasing access to higher education, especially in regions where first cousin marriage is common, may indirectly reduce these rates.
